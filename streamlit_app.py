@@ -1,31 +1,79 @@
-# Streamlitライブラリをインポート
 import streamlit as st
+import pandas as pd
+import datetime
+import openai
 
-# ページ設定（タブに表示されるタイトル、表示幅）
-st.set_page_config(page_title="タイトル", layout="wide")
+# Initialize session state for reminders
+if 'reminders' not in st.session_state:
+    st.session_state.reminders = []
 
-# タイトルを設定
-st.title('Streamlitのサンプルアプリ')
-
-# テキスト入力ボックスを作成し、ユーザーからの入力を受け取る
-user_input = st.text_input('あなたの名前を入力してください')
-
-# ボタンを作成し、クリックされたらメッセージを表示
-if st.button('挨拶する'):
-    if user_input:  # 名前が入力されているかチェック
-        st.success(f'🌟 こんにちは、{user_input}さん! 🌟')  # メッセージをハイライト
+# Function to calculate daily completion percentage and generate advice
+def generate_advice(title, due_date):
+    days_left = (due_date - datetime.datetime.now()).days
+    if days_left > 0:
+        daily_percentage = 100 / days_left
+        prompt = (f"The reminder '{title}' is due in {days_left} days."
+                  f" Suggest strategies to complete it by finishing {daily_percentage:.2f}% daily.")
+        try:
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=prompt,
+                max_tokens=100
+            )
+            return response.choices[0].text.strip()
+        except Exception as e:
+            return f"Error generating advice: {str(e)}"
     else:
-        st.error('名前を入力してください。')  # エラーメッセージを表示
+        return "The deadline has already passed. Try to prioritize overdue tasks!"
 
-# スライダーを作成し、値を選択
-number = st.slider('好きな数字（10進数）を選んでください', 0, 100)
+# Sidebar for adding a new reminder
+st.sidebar.header("Add a New Reminder")
+category = st.sidebar.text_input("Category")
+title = st.sidebar.text_input("Title")
+details = st.sidebar.text_area("Details")
+due_date = st.sidebar.date_input("Due Date", min_value=datetime.date.today())
+due_time = st.sidebar.time_input("Due Time")
+completion_level = st.sidebar.slider("Completion Level (%)", 0, 100, 0)
 
-# 補足メッセージ
-st.caption("十字キー（左右）でも調整できます。")
+if st.sidebar.button("Add Reminder"):
+    reminder = {
+        'Category': category,
+        'Title': title,
+        'Details': details,
+        'Due Date': datetime.datetime.combine(due_date, due_time),
+        'Completion': completion_level,
+    }
+    st.session_state.reminders.append(reminder)
+    st.sidebar.success("Reminder added successfully!")
 
-# 選択した数字を表示
-st.write(f'あなたが選んだ数字は「{number}」です。')
+# Main app
+st.title("Reminder Web Application")
 
-# 選択した数値を2進数に変換
-binary_representation = bin(number)[2:]  # 'bin'関数で2進数に変換し、先頭の'0b'を取り除く
-st.info(f'🔢 10進数の「{number}」を2進数で表現すると「{binary_representation}」になります。 🔢')  # 2進数の表示をハイライト
+# Group reminders by category
+categories = list(set([reminder['Category'] for reminder in st.session_state.reminders]))
+selected_category = st.selectbox("Filter by Category", options=["All"] + categories)
+
+filtered_reminders = (
+    st.session_state.reminders if selected_category == "All" 
+    else [r for r in st.session_state.reminders if r['Category'] == selected_category]
+)
+
+if filtered_reminders:
+    for reminder in filtered_reminders:
+        st.subheader(f"{reminder['Category']} - {reminder['Title']}")
+        st.write(f"**Details:** {reminder['Details']}")
+        st.write(f"**Due Date:** {reminder['Due Date']}")
+        st.write(f"**Completion Level:** {reminder['Completion']}%")
+        # Update completion level
+        new_completion = st.slider(
+            f"Update Completion Level for '{reminder['Title']}'", 
+            0, 100, reminder['Completion'], key=reminder['Title']
+        )
+        reminder['Completion'] = new_completion
+
+        # Check if the due date is near
+        days_left = (reminder['Due Date'] - datetime.datetime.now()).days
+        if 0 < days_left <= 3:
+            st.warning(f"Reminder '{reminder['Title']}' is due in {days_left} days!")
+else:
+    st.info("No reminders found in this category.")
