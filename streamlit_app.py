@@ -29,6 +29,8 @@ if "timer_running" not in st.session_state:
     st.session_state.timer_running = False
 if "stop_pressed" not in st.session_state:
     st.session_state.stop_pressed = False
+if "motivational_quote" not in st.session_state:
+    st.session_state.motivational_quote = ""
 
 # チェックボックスが両方チェックされている場合のみスタートボタンを表示
 if agree_smartphone and agree_desk:
@@ -48,20 +50,23 @@ if agree_smartphone and agree_desk:
             st.session_state.motivational_quote = random.choice(motivational_quotes)
 
         if st.session_state.timer_running:
-            # カウントダウン開始
-            st.write("タイマー開始！")
-            placeholder = st.empty()
+            # タイマー表示用プレースホルダー
+            timer_placeholder = st.empty()
+            quote_placeholder = st.empty()
             stop_button_placeholder = st.empty()
+
+            # ランダムで表示される言葉を一度だけ表示
+            quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
 
             for remaining in range(total_seconds, -1, -1):
                 if st.session_state.stop_pressed:
                     break
                 minutes, seconds = divmod(remaining, 60)
                 hours, minutes = divmod(minutes, 60)
-                placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+                timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
                 time.sleep(1)
 
-            placeholder.empty()
+            timer_placeholder.empty()
 
             if not st.session_state.stop_pressed:
                 st.success("タイマー終了！お疲れさまでした！")
@@ -71,10 +76,6 @@ if agree_smartphone and agree_desk:
             st.session_state.stop_pressed = True
             st.session_state.timer_running = False
             st.error("本当に辞めちゃうの．．．？")
-
-        # ランダムで表示される言葉
-        if st.session_state.timer_running:
-            st.write(f"励ましの言葉: {st.session_state.motivational_quote}")
     else:
         st.warning("勉強時間を入力してください！")
 else:
