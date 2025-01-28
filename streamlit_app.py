@@ -46,7 +46,7 @@ if agree_smartphone and agree_desk:
     total_seconds = hours * 3600 + minutes * 60 + seconds
 
     if total_seconds > 0:
-        if st.button("準備はいいですか？（スタート）"):
+        if st.button("準備はいいですか？（スタート）") and not st.session_state.timer_running:
             st.session_state.timer_running = True
             st.session_state.stop_pressed = False
             st.session_state.motivational_quote = random.choice(motivational_quotes)
@@ -55,39 +55,37 @@ if agree_smartphone and agree_desk:
         # タイマー表示用プレースホルダー
         timer_placeholder = st.empty()
         quote_placeholder = st.empty()
-        stop_button_placeholder = st.empty()
-        restart_button_placeholder = st.empty()
+        control_buttons_placeholder = st.empty()
 
-        # タイマー更新
-        if st.session_state.timer_running:
-            # ランダムで表示される言葉を一度だけ表示
+        # タイマーの状態管理
+        if st.session_state.timer_running and not st.session_state.stop_pressed:
             quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
 
-            while st.session_state.remaining_time > 0:
-                if st.session_state.stop_pressed:
-                    break
+            if st.session_state.remaining_time > 0:
                 minutes, seconds = divmod(st.session_state.remaining_time, 60)
                 hours, minutes = divmod(minutes, 60)
                 timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
 
-                # ストップボタンを表示
-                if stop_button_placeholder.button("ストップ"):
-                    st.session_state.stop_pressed = True
-                    st.session_state.timer_running = False
-
+                # 1秒後に再レンダリング
                 time.sleep(1)
                 st.session_state.remaining_time -= 1
 
-            if st.session_state.remaining_time == 0 and not st.session_state.stop_pressed:
+            else:
+                st.session_state.timer_running = False
                 st.success("タイマー終了！お疲れさまでした！")
 
-        # ストップ時の処理
-        if st.session_state.stop_pressed:
-            st.error("本当に辞めちゃうの．．．？")
-            if restart_button_placeholder.button("もうちょっとがんばってみる！？"):
-                st.session_state.stop_pressed = False
-                st.session_state.timer_running = True
+        # ストップボタンと再開ボタンの表示
+        with control_buttons_placeholder.container():
+            if st.session_state.timer_running:
+                if st.button("ストップ"):
+                    st.session_state.stop_pressed = True
+                    st.session_state.timer_running = False
 
+            if st.session_state.stop_pressed:
+                st.error("本当に辞めちゃうの．．．？")
+                if st.button("もうちょっとがんばってみる！？"):
+                    st.session_state.stop_pressed = False
+                    st.session_state.timer_running = True
     else:
         st.warning("勉強時間を入力してください！")
 else:
