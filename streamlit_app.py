@@ -68,22 +68,24 @@ if agree_smartphone and agree_desk:
                 minutes, seconds = divmod(st.session_state.remaining_time, 60)
                 hours, minutes = divmod(minutes, 60)
                 timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+
+                # ストップボタンを表示
+                if stop_button_placeholder.button("ストップ"):
+                    st.session_state.stop_pressed = True
+                    st.session_state.timer_running = False
+                    st.error("本当に辞めちゃうの．．．？")
+
                 time.sleep(1)
                 st.session_state.remaining_time -= 1
 
             if st.session_state.remaining_time == 0 and not st.session_state.stop_pressed:
                 st.success("タイマー終了！お疲れさまでした！")
 
-        # ストップボタンを表示
-        if st.session_state.timer_running and stop_button_placeholder.button("ストップ"):
-            st.session_state.stop_pressed = True
-            st.session_state.timer_running = False
-            st.error("本当に辞めちゃうの．．．？")
-
         # 再開ボタンを表示
-        if st.session_state.stop_pressed and restart_button_placeholder.button("もうちょっとがんばってみる！？"):
-            st.session_state.stop_pressed = False
-            st.session_state.timer_running = True
+        if st.session_state.stop_pressed:
+            if restart_button_placeholder.button("もうちょっとがんばってみる！？"):
+                st.session_state.stop_pressed = False
+                st.session_state.timer_running = True
 
     else:
         st.warning("勉強時間を入力してください！")
