@@ -52,13 +52,13 @@ if agree_smartphone and agree_desk:
             st.session_state.motivational_quote = random.choice(motivational_quotes)
             st.session_state.remaining_time = total_seconds
 
-        if st.session_state.timer_running:
-            # タイマー表示用プレースホルダー
-            timer_placeholder = st.empty()
-            quote_placeholder = st.empty()
-            stop_button_placeholder = st.empty()
-            restart_button_placeholder = st.empty()
+        # タイマー表示用プレースホルダー
+        timer_placeholder = st.empty()
+        quote_placeholder = st.empty()
+        stop_button_placeholder = st.empty()
+        restart_button_placeholder = st.empty()
 
+        if st.session_state.timer_running:
             # ランダムで表示される言葉を一度だけ表示
             quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
 
@@ -71,18 +71,16 @@ if agree_smartphone and agree_desk:
                 time.sleep(1)
                 st.session_state.remaining_time -= 1
 
-            timer_placeholder.empty()
-
             if st.session_state.remaining_time == 0 and not st.session_state.stop_pressed:
                 st.success("タイマー終了！お疲れさまでした！")
 
-        # ストップボタン
-        if stop_button_placeholder.button("ストップ"):
+        # ストップボタンを表示
+        if st.session_state.timer_running and stop_button_placeholder.button("ストップ"):
             st.session_state.stop_pressed = True
             st.session_state.timer_running = False
             st.error("本当に辞めちゃうの．．．？")
 
-        # 再開ボタン
+        # 再開ボタンを表示
         if st.session_state.stop_pressed and restart_button_placeholder.button("もうちょっとがんばってみる！？"):
             st.session_state.stop_pressed = False
             st.session_state.timer_running = True
