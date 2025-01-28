@@ -1,79 +1,60 @@
 import streamlit as st
-import pandas as pd
-import datetime
-import openai
+import time
+import random
 
-# Initialize session state for reminders
-if 'reminders' not in st.session_state:
-    st.session_state.reminders = []
+# ランダムで表示する言葉のリスト
+motivational_quotes = [
+    "何やってるんですか　勉強してください",
+    "小さいことを重ねることが、とんでもない所に行くただ一つの道",
+    "誰よりも三倍、四倍、五倍勉強するもの、それが天才だ",
+    "あきらめたらそこで試合終了だよ",
+    "失敗したから何なのだ、失敗から学び得て、また挑戦すればいいじゃないか",
+    "どんな人だって成功できる。自分に何度もこの言葉をいい聞かせていれば、絶対に成功できる。",
+    "成功が上がりでもなければ、失敗が終わりでもない。肝心なのは続ける勇気である。",
+    "あきらめなければ必ず道はある。",
+    "今日の成果は過去の努力の結果であり、未来はこれからの努力で決まる"
+]
 
-# Function to calculate daily completion percentage and generate advice
-def generate_advice(title, due_date):
-    days_left = (due_date - datetime.datetime.now()).days
-    if days_left > 0:
-        daily_percentage = 100 / days_left
-        prompt = (f"The reminder '{title}' is due in {days_left} days."
-                  f" Suggest strategies to complete it by finishing {daily_percentage:.2f}% daily.")
-        try:
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=prompt,
-                max_tokens=100
-            )
-            return response.choices[0].text.strip()
-        except Exception as e:
-            return f"Error generating advice: {str(e)}"
+st.title("勉強タイマーアプリ")
+
+# スマホを置くメッセージ
+st.subheader("まずはスマホを置きましょう")
+
+# スマホを置いたかと机の上の確認チェックボックス
+agree_smartphone = st.checkbox("スマホは置きましたか？このアプリをスマホで使っているなら、遠くにおいてスタートを押しましょう！")
+agree_desk = st.checkbox("机の上に気が散るものはないですか？")
+
+# チェックボックスが両方チェックされている場合のみスタートボタンを表示
+if agree_smartphone and agree_desk:
+    st.success("準備ができました！")
+
+    # 勉強時間の入力
+    hours = st.number_input("勉強する時間(時間):", min_value=0, max_value=24, step=1, value=0)
+    minutes = st.number_input("勉強する時間(分):", min_value=0, max_value=59, step=1, value=0)
+    seconds = st.number_input("勉強する時間(秒):", min_value=0, max_value=59, step=1, value=0)
+
+    total_seconds = hours * 3600 + minutes * 60 + seconds
+
+    if total_seconds > 0:
+        if st.button("準備はいいですか？（スタート）"):
+            # カウントダウン開始
+            for i in range(3, 0, -1):
+                st.write(f"{i}...")
+                time.sleep(1)
+
+            st.write("タイマー開始！")
+
+            # タイマー実行
+            while total_seconds > 0:
+                minutes, seconds = divmod(total_seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                st.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+                st.write(random.choice(motivational_quotes))
+                time.sleep(1)
+                total_seconds -= 1
+
+            st.success("タイマー終了！お疲れさまでした！")
     else:
-        return "The deadline has already passed. Try to prioritize overdue tasks!"
-
-# Sidebar for adding a new reminder
-st.sidebar.header("Add a New Reminder")
-category = st.sidebar.text_input("Category")
-title = st.sidebar.text_input("Title")
-details = st.sidebar.text_area("Details")
-due_date = st.sidebar.date_input("Due Date", min_value=datetime.date.today())
-due_time = st.sidebar.time_input("Due Time")
-completion_level = st.sidebar.slider("Completion Level (%)", 0, 100, 0)
-
-if st.sidebar.button("Add Reminder"):
-    reminder = {
-        'Category': category,
-        'Title': title,
-        'Details': details,
-        'Due Date': datetime.datetime.combine(due_date, due_time),
-        'Completion': completion_level,
-    }
-    st.session_state.reminders.append(reminder)
-    st.sidebar.success("Reminder added successfully!")
-
-# Main app
-st.title("Reminder Web Application")
-
-# Group reminders by category
-categories = list(set([reminder['Category'] for reminder in st.session_state.reminders]))
-selected_category = st.selectbox("Filter by Category", options=["All"] + categories)
-
-filtered_reminders = (
-    st.session_state.reminders if selected_category == "All" 
-    else [r for r in st.session_state.reminders if r['Category'] == selected_category]
-)
-
-if filtered_reminders:
-    for reminder in filtered_reminders:
-        st.subheader(f"{reminder['Category']} - {reminder['Title']}")
-        st.write(f"**Details:** {reminder['Details']}")
-        st.write(f"**Due Date:** {reminder['Due Date']}")
-        st.write(f"**Completion Level:** {reminder['Completion']}%")
-        # Update completion level
-        new_completion = st.slider(
-            f"Update Completion Level for '{reminder['Title']}'", 
-            0, 100, reminder['Completion'], key=reminder['Title']
-        )
-        reminder['Completion'] = new_completion
-
-        # Check if the due date is near
-        days_left = (reminder['Due Date'] - datetime.datetime.now()).days
-        if 0 < days_left <= 3:
-            st.warning(f"Reminder '{reminder['Title']}' is due in {days_left} days!")
+        st.warning("勉強時間を入力してください！")
 else:
-    st.info("No reminders found in this category.")
+    st.info("チェックリストをすべて確認してください！")
