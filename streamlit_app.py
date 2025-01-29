@@ -20,6 +20,8 @@ if "timer_running" not in st.session_state:
     st.session_state.timer_running = False
 if "time_left" not in st.session_state:
     st.session_state.time_left = 0
+if "paused_time" not in st.session_state:
+    st.session_state.paused_time = None
 
 st.title("勉強タイマー")
 st.write("まずはスマホを置きましょう！")
@@ -38,19 +40,22 @@ if checkbox1 and checkbox2:
         st.session_state.time_left = hours * 3600 + minutes * 60 + seconds
         st.session_state.timer_running = True
         st.session_state.start_time = time.time()
-        st.experimental_rerun()
+        st.rerun()
 
 # タイマー実行
 if st.session_state.timer_running and st.session_state.time_left > 0:
-    elapsed_time = int(time.time() - st.session_state.start_time)
-    st.session_state.time_left = max(0, st.session_state.time_left - elapsed_time)
-    st.session_state.start_time = time.time()
-
-    mins, secs = divmod(st.session_state.time_left, 60)
-    time_display = f"{mins:02}:{secs:02}"
-    st.write(time_display)
-    st.write(random.choice(messages))
-
+    timer_placeholder = st.empty()
+    message_placeholder = st.empty()
+    
+    while st.session_state.time_left > 0 and st.session_state.timer_running:
+        mins, secs = divmod(st.session_state.time_left, 60)
+        time_display = f"{mins:02}:{secs:02}"
+        timer_placeholder.write(time_display)
+        message_placeholder.write(random.choice(messages))
+        time.sleep(1)
+        st.session_state.time_left -= 1
+        st.rerun()
+    
     if st.session_state.time_left == 0:
         st.write("勉強時間が終了しました！お疲れ様でした！")
         st.session_state.timer_running = False
@@ -59,17 +64,17 @@ if st.session_state.timer_running and st.session_state.time_left > 0:
 if st.session_state.timer_running:
     if st.button("ストップ"):
         st.session_state.timer_running = False
-        st.session_state.paused_time = time.time()
+        st.session_state.paused_time = st.session_state.time_left
+        st.rerun()
 
 # 再開ボタン
 if not st.session_state.timer_running and st.session_state.time_left > 0:
     if st.button("再開"):
         st.session_state.timer_running = True
-        st.session_state.start_time = time.time() - (st.session_state.paused_time - st.session_state.start_time)
-        st.experimental_rerun()
+        st.rerun()
 
 # リセットボタン
 if st.button("リセット"):
     st.session_state.timer_running = False
     st.session_state.time_left = 0
-    st.experimental_rerun()
+    st.rerun()
