@@ -2,8 +2,8 @@ import streamlit as st
 import time
 import random
 
-# ランダムで表示する言葉のリスト
-motivational_quotes = [
+# 応援メッセージ
+messages = [
     "何やってるんですか　勉強してください",
     "小さいことを重ねることが、とんでもない所に行くただ一つの道",
     "誰よりも三倍、四倍、五倍勉強するもの、それが天才だ",
@@ -15,85 +15,60 @@ motivational_quotes = [
     "今日の成果は過去の努力の結果であり、未来はこれからの努力で決まる"
 ]
 
-st.title("勉強タイマーアプリ")
+# タイマーの状態を管理
+timer_running = st.session_state.get("timer_running", False)
+time_left = st.session_state.get("time_left", 0)
 
-# スマホを置くメッセージ
-st.subheader("まずはスマホを置きましょう")
+st.title("勉強タイマー")
+st.write("まずはスマホを置きましょう！")
 
-# スマホを置いたかと机の上の確認チェックボックス
-agree_smartphone = st.checkbox("スマホは置きましたか？このアプリをスマホで使っているなら、遠くにおいてスタートを押しましょう！")
-agree_desk = st.checkbox("机の上に気が散るものはないですか？")
+# ユーザーの入力
+hours = st.number_input("時間", min_value=0, max_value=10, value=0, step=1)
+minutes = st.number_input("分", min_value=0, max_value=59, value=0, step=1)
+seconds = st.number_input("秒", min_value=0, max_value=59, value=0, step=1)
 
-# セッション状態を初期化
-if "timer_running" not in st.session_state:
+# チェックボックス
+checkbox1 = st.checkbox("スマホは置きましたか？")
+checkbox2 = st.checkbox("机の上に気が散るものはないですか？")
+
+if checkbox1 and checkbox2:
+    if st.button("準備はいいですか？（スタート）"):
+        total_seconds = hours * 3600 + minutes * 60 + seconds
+        st.session_state.time_left = total_seconds
+        st.session_state.timer_running = True
+
+# タイマー実行
+if st.session_state.timer_running and st.session_state.time_left > 0:
+    with st.empty():
+        for i in range(3, 0, -1):
+            st.write(f"{i}...")
+            time.sleep(1)
+
+    while st.session_state.time_left > 0:
+        mins, secs = divmod(st.session_state.time_left, 60)
+        time_display = f"{mins:02}:{secs:02}"
+        st.write(time_display)
+        st.write(random.choice(messages))
+        time.sleep(1)
+        st.session_state.time_left -= 1
+        st.experimental_rerun()
+
+if st.session_state.time_left == 0 and st.session_state.timer_running:
+    st.write("勉強時間が終了しました！お疲れ様でした！")
     st.session_state.timer_running = False
-if "stop_pressed" not in st.session_state:
-    st.session_state.stop_pressed = False
-if "motivational_quote" not in st.session_state:
-    st.session_state.motivational_quote = ""
-if "remaining_time" not in st.session_state:
-    st.session_state.remaining_time = 0
 
-# チェックボックスが両方チェックされている場合のみスタートボタンを表示
-if agree_smartphone and agree_desk:
-    st.success("準備ができました！")
+# ストップボタン
+if st.session_state.timer_running:
+    if st.button("ストップ"):
+        st.session_state.timer_running = False
 
-    # 勉強時間の入力
-    hours = st.number_input("勉強する時間(時間):", min_value=0, max_value=24, step=1, value=0)
-    minutes = st.number_input("勉強する時間(分):", min_value=0, max_value=59, step=1, value=0)
-    seconds = st.number_input("勉強する時間(秒):", min_value=0, max_value=59, step=1, value=0)
+# 再開ボタン
+if not st.session_state.timer_running and st.session_state.time_left > 0:
+    if st.button("再開"):
+        st.session_state.timer_running = True
+        st.experimental_rerun()
 
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-
-    if total_seconds > 0:
-        if st.button("準備はいいですか？（スタート）"):
-            st.session_state.timer_running = True
-            st.session_state.stop_pressed = False
-            st.session_state.motivational_quote = random.choice(motivational_quotes)
-            st.session_state.remaining_time = total_seconds
-            
-            for i in range(3, 0, -1):
-                st.write(f"{i}...")
-                time.sleep(1)
-            st.write("スタート！")
-
-        # タイマー表示用プレースホルダー
-        timer_placeholder = st.empty()
-        quote_placeholder = st.empty()
-        control_buttons_placeholder = st.empty()
-
-        if st.session_state.timer_running and st.session_state.remaining_time > 0:
-            while st.session_state.remaining_time > 0:
-                if not st.session_state.timer_running:
-                    break
-                
-                minutes, seconds = divmod(st.session_state.remaining_time, 60)
-                hours, minutes = divmod(minutes, 60)
-                timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
-                quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
-                time.sleep(1)
-                st.session_state.remaining_time -= 1
-                st.rerun()
-
-        if st.session_state.remaining_time == 0:
-            st.session_state.timer_running = False
-            st.success("タイマー終了！お疲れさまでした！")
-
-    # ストップボタンと再開ボタンの表示
-    if st.session_state.timer_running:
-        if st.button("ストップ"):
-            st.session_state.timer_running = False
-            st.session_state.stop_pressed = True
-            st.rerun()
-
-    if st.session_state.stop_pressed:
-        st.warning("本当に辞めちゃうの．．．？")
-        if st.button("もうちょっとがんばってみる！？"):
-            st.session_state.timer_running = True
-            st.session_state.stop_pressed = False
-            st.rerun()
-    
-    else:
-        st.warning("勉強時間を入力してください！")
-else:
-    st.info("チェックリストをすべて確認してください！")
+# リセットボタン
+if st.button("リセット"):
+    st.session_state.timer_running = False
+    st.session_state.time_left = 0
