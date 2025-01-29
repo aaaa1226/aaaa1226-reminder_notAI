@@ -37,37 +37,35 @@ if checkbox1 and checkbox2:
     if st.button("準備はいいですか？（スタート）"):
         st.session_state.time_left = hours * 3600 + minutes * 60 + seconds
         st.session_state.timer_running = True
+        st.session_state.start_time = time.time()
         st.experimental_rerun()
 
 # タイマー実行
 if st.session_state.timer_running and st.session_state.time_left > 0:
-    with st.empty():
-        for i in range(3, 0, -1):
-            st.write(f"{i}...")
-            time.sleep(1)
-        
-    while st.session_state.time_left > 0 and st.session_state.timer_running:
-        mins, secs = divmod(st.session_state.time_left, 60)
-        time_display = f"{mins:02}:{secs:02}"
-        st.write(time_display)
-        st.write(random.choice(messages))
-        time.sleep(1)
-        st.session_state.time_left -= 1
-        st.experimental_rerun()
+    elapsed_time = int(time.time() - st.session_state.start_time)
+    st.session_state.time_left = max(0, st.session_state.time_left - elapsed_time)
+    st.session_state.start_time = time.time()
 
-if st.session_state.time_left == 0 and st.session_state.timer_running:
-    st.write("勉強時間が終了しました！お疲れ様でした！")
-    st.session_state.timer_running = False
+    mins, secs = divmod(st.session_state.time_left, 60)
+    time_display = f"{mins:02}:{secs:02}"
+    st.write(time_display)
+    st.write(random.choice(messages))
+
+    if st.session_state.time_left == 0:
+        st.write("勉強時間が終了しました！お疲れ様でした！")
+        st.session_state.timer_running = False
 
 # ストップボタン
 if st.session_state.timer_running:
     if st.button("ストップ"):
         st.session_state.timer_running = False
+        st.session_state.paused_time = time.time()
 
 # 再開ボタン
 if not st.session_state.timer_running and st.session_state.time_left > 0:
     if st.button("再開"):
         st.session_state.timer_running = True
+        st.session_state.start_time = time.time() - (st.session_state.paused_time - st.session_state.start_time)
         st.experimental_rerun()
 
 # リセットボタン
