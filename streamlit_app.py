@@ -3,16 +3,21 @@ import time
 import random
 
 def countdown_timer():
-    while st.session_state.remaining_time > 0:
-        mins, secs = divmod(st.session_state.remaining_time, 60)
-        hours, mins = divmod(mins, 60)
-        st.session_state.timer = f"{hours:02}:{mins:02}:{secs:02}"
-        st.experimental_rerun()
-        time.sleep(1)
-        st.session_state.remaining_time -= 1
-    st.session_state.timer = "00:00:00"
-    st.session_state.message = "\U0001F389 勉強お疲れ様でした！\U0001F389"
-    st.experimental_rerun()
+    if 'timer_running' not in st.session_state:
+        st.session_state.timer_running = False
+    
+    if st.session_state.timer_running:
+        if st.session_state.remaining_time > 0:
+            mins, secs = divmod(st.session_state.remaining_time, 60)
+            hours, mins = divmod(mins, 60)
+            st.session_state.timer = f"{hours:02}:{mins:02}:{secs:02}"
+            st.session_state.remaining_time -= 1
+            time.sleep(1)
+            st.experimental_rerun()
+        else:
+            st.session_state.timer_running = False
+            st.session_state.timer = "00:00:00"
+            st.session_state.message = "\U0001F389 勉強お疲れ様でした！\U0001F389"
 
 def main():
     st.title("勉強タイマー ⏳")
@@ -30,11 +35,13 @@ def main():
             total_seconds = hours * 3600 + minutes * 60 + seconds
             if total_seconds > 0:
                 st.session_state.remaining_time = total_seconds
+                st.session_state.timer_running = True
                 st.session_state.timer = "00:00:00"
                 st.session_state.message = ""
-                countdown_timer()
+                st.experimental_rerun()
     
     st.write(f"### 残り時間: {st.session_state.get('timer', '00:00:00')}")
+    countdown_timer()
     
     messages = [
         "何やってるんですか　勉強してください",
