@@ -58,7 +58,7 @@ if agree_smartphone and agree_desk:
         control_buttons_placeholder = st.empty()
 
         while st.session_state.remaining_time > 0:
-            if st.session_state.stop_pressed:
+            if not st.session_state.timer_running:
                 break
             
             minutes, seconds = divmod(st.session_state.remaining_time, 60)
@@ -73,20 +73,20 @@ if agree_smartphone and agree_desk:
             st.session_state.timer_running = False
             st.success("タイマー終了！お疲れさまでした！")
 
-        # ストップボタンと再開ボタンの表示
-        with control_buttons_placeholder.container():
-            if st.session_state.timer_running and not st.session_state.stop_pressed:
-                if st.button("ストップ"):
-                    st.session_state.stop_pressed = True
-                    st.session_state.timer_running = False
-                    st.rerun()
+    # ストップボタンと再開ボタンの表示
+    if st.session_state.timer_running:
+        if st.button("ストップ"):
+            st.session_state.timer_running = False
+            st.session_state.stop_pressed = True
+            st.rerun()
 
-            if st.session_state.stop_pressed:
-                st.warning("本当に辞めちゃうの．．．？")
-                if st.button("もうちょっとがんばってみる！？"):
-                    st.session_state.stop_pressed = False
-                    st.session_state.timer_running = True
-                    st.rerun()
+    if st.session_state.stop_pressed:
+        st.warning("本当に辞めちゃうの．．．？")
+        if st.button("もうちょっとがんばってみる！？"):
+            st.session_state.timer_running = True
+            st.session_state.stop_pressed = False
+            st.rerun()
+    
     else:
         st.warning("勉強時間を入力してください！")
 else:
