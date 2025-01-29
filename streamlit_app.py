@@ -2,59 +2,78 @@ import streamlit as st
 import time
 import random
 
-def countdown_timer(total_seconds):
-    while total_seconds:
-        mins, secs = divmod(total_seconds, 60)
-        hours, mins = divmod(mins, 60)
-        timer_display = f"{hours:02}:{mins:02}:{secs:02}"
-        st.session_state.timer = timer_display
-        time.sleep(1)
-        total_seconds -= 1
-    st.session_state.timer = "00:00:00"
-    st.session_state.message = "\U0001F389 勉強お疲れ様でした！\U0001F389"
+# ランダムで表示する言葉のリスト
+motivational_quotes = [
+    "何やってるんですか　勉強してください",
+    "小さいことを重ねることが、とんでもない所に行くただ一つの道",
+    "誰よりも三倍、四倍、五倍勉強するもの、それが天才だ",
+    "あきらめたらそこで試合終了だよ",
+    "失敗したから何なのだ、失敗から学び得て、また挑戦すればいいじゃないか",
+    "どんな人だって成功できる。自分に何度もこの言葉をいい聞かせていれば、絶対に成功できる。",
+    "成功が上がりでもなければ、失敗が終わりでもない。肝心なのは続ける勇気である。",
+    "あきらめなければ必ず道はある。",
+    "今日の成果は過去の努力の結果であり、未来はこれからの努力で決まる"
+]
 
-def main():
-    st.title("勉強タイマー ⏳")
-    st.write("まずはスマホを置きましょう！")
-    
-    hours = st.number_input("時間", min_value=0, max_value=24, value=0, step=1)
-    minutes = st.number_input("分", min_value=0, max_value=59, value=0, step=1)
-    seconds = st.number_input("秒", min_value=0, max_value=59, value=0, step=1)
-    
-    confirm_phone = st.checkbox("スマホは置きましたか？このアプリをスマホで使っているなら、遠くにおいてスタートを押しましょう！")
-    confirm_desk = st.checkbox("机の上に気が散るものはないですか？")
-    
-    if confirm_phone and confirm_desk:
-        if st.button("準備はいいですか？スタート！"):
-            st.session_state.countdown = 3
-            while st.session_state.countdown:
-                st.write(f"開始まで: {st.session_state.countdown}")
+st.title("勉強タイマーアプリ")
+
+# スマホを置くメッセージ
+st.subheader("まずはスマホを置きましょう")
+
+# スマホを置いたかと机の上の確認チェックボックス
+agree_smartphone = st.checkbox("スマホは置きましたか？このアプリをスマホで使っているなら、遠くにおいてスタートを押しましょう！")
+agree_desk = st.checkbox("机の上に気が散るものはないですか？")
+
+# セッション状態を初期化
+if "timer_running" not in st.session_state:
+    st.session_state.timer_running = False
+if "stop_pressed" not in st.session_state:
+    st.session_state.stop_pressed = False
+if "motivational_quote" not in st.session_state:
+    st.session_state.motivational_quote = ""
+if "remaining_time" not in st.session_state:
+    st.session_state.remaining_time = 0
+
+# チェックボックスが両方チェックされている場合のみスタートボタンを表示
+if agree_smartphone and agree_desk:
+    st.success("準備ができました！")
+
+    # 勉強時間の入力
+    hours = st.number_input("勉強する時間(時間):", min_value=0, max_value=24, step=1, value=0)
+    minutes = st.number_input("勉強する時間(分):", min_value=0, max_value=59, step=1, value=0)
+    seconds = st.number_input("勉強する時間(秒):", min_value=0, max_value=59, step=1, value=0)
+
+    total_seconds = hours * 3600 + minutes * 60 + seconds
+
+    if total_seconds > 0:
+        if st.button("準備はいいですか？（スタート）") and not st.session_state.timer_running:
+            st.session_state.timer_running = True
+            st.session_state.stop_pressed = False
+            st.session_state.motivational_quote = random.choice(motivational_quotes)
+            st.session_state.remaining_time = total_seconds
+
+        # タイマー表示用プレースホルダー
+        timer_placeholder = st.empty()
+        quote_placeholder = st.empty()
+        control_buttons_placeholder = st.empty()
+
+        # タイマーの状態管理
+        if st.session_state.timer_running and not st.session_state.stop_pressed:
+            quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
+
+            if st.session_state.remaining_time > 0:
+                minutes, seconds = divmod(st.session_state.remaining_time, 60)
+                hours, minutes = divmod(minutes, 60)
+                timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+
+                # 1秒後に再レンダリング
                 time.sleep(1)
-                st.session_state.countdown -= 1
-            total_seconds = hours * 3600 + minutes * 60 + seconds
-            st.session_state.timer = "00:00:00"
-            st.session_state.message = ""
-            countdown_timer(total_seconds)
-    
-    st.write(f"### 残り時間: {st.session_state.get('timer', '00:00:00')}")
-    
-    messages = [
-        "何やってるんですか　勉強してください",
-        "小さいことを重ねることが、とんでもない所に行くただ一つの道",
-        "誰よりも三倍、四倍、五倍勉強するもの、それが天才だ",
-        "あきらめたらそこで試合終了だよ",
-        "失敗したから何なのだ、失敗から学び得て、また挑戦すればいいじゃないか",
-        "どんな人だって成功できる。自分に何度もこの言葉をいい聞かせていれば、絶対に成功できる。",
-        "成功が上がりでもなければ、失敗が終わりでもない。肝心なのは続ける勇気である。",
-        "あきらめなければ必ず道はある。",
-        "今日の成果は過去の努力の結果であり、未来はこれからの努力で決まる",
-    ]
-    
-    if 'timer' in st.session_state and st.session_state.timer != "00:00:00":
-        st.write(random.choice(messages))
-    
-    if 'message' in st.session_state:
-        st.write(st.session_state.message)
+                st.session_state.remaining_time -= 1
 
-if __name__ == "__main__":
-    main()
+            else:
+                st.session_state.timer_running = False
+                st.success("タイマー終了！お疲れさまでした！")
+    else:
+       st.warning("勉強時間を入力してください！")
+else:
+    st.info("チェックリストをすべて確認してください！")
