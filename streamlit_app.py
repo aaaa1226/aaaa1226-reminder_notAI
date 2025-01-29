@@ -53,18 +53,18 @@ if agree_smartphone and agree_desk:
         timer_placeholder = st.empty()
         quote_placeholder = st.empty()
 
-        while st.session_state.remaining_time > 0:
-            if not st.session_state.timer_running:
-                break
-            
-            minutes, seconds = divmod(st.session_state.remaining_time, 60)
-            hours, minutes = divmod(minutes, 60)
-            timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
-            quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
-            time.sleep(1)
-            st.session_state.remaining_time -= 1
-            st.rerun()
-        
+        if st.session_state.timer_running and st.session_state.remaining_time > 0:
+            for _ in range(st.session_state.remaining_time):
+                if not st.session_state.timer_running:
+                    break
+                minutes, seconds = divmod(st.session_state.remaining_time, 60)
+                hours, minutes = divmod(minutes, 60)
+                timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+                quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
+                time.sleep(1)
+                st.session_state.remaining_time -= 1
+                st.experimental_rerun()
+
         if st.session_state.remaining_time == 0:
             st.session_state.timer_running = False
             st.success("タイマー終了！お疲れさまでした！")
