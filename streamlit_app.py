@@ -15,9 +15,11 @@ messages = [
     "今日の成果は過去の努力の結果であり、未来はこれからの努力で決まる"
 ]
 
-# タイマーの状態を管理
-timer_running = st.session_state.get("timer_running", False)
-time_left = st.session_state.get("time_left", 0)
+# セッションステートの初期化
+if "timer_running" not in st.session_state:
+    st.session_state.timer_running = False
+if "time_left" not in st.session_state:
+    st.session_state.time_left = 0
 
 st.title("勉強タイマー")
 st.write("まずはスマホを置きましょう！")
@@ -33,9 +35,9 @@ checkbox2 = st.checkbox("机の上に気が散るものはないですか？")
 
 if checkbox1 and checkbox2:
     if st.button("準備はいいですか？（スタート）"):
-        total_seconds = hours * 3600 + minutes * 60 + seconds
-        st.session_state.time_left = total_seconds
+        st.session_state.time_left = hours * 3600 + minutes * 60 + seconds
         st.session_state.timer_running = True
+        st.experimental_rerun()
 
 # タイマー実行
 if st.session_state.timer_running and st.session_state.time_left > 0:
@@ -43,8 +45,8 @@ if st.session_state.timer_running and st.session_state.time_left > 0:
         for i in range(3, 0, -1):
             st.write(f"{i}...")
             time.sleep(1)
-
-    while st.session_state.time_left > 0:
+        
+    while st.session_state.time_left > 0 and st.session_state.timer_running:
         mins, secs = divmod(st.session_state.time_left, 60)
         time_display = f"{mins:02}:{secs:02}"
         st.write(time_display)
@@ -72,3 +74,4 @@ if not st.session_state.timer_running and st.session_state.time_left > 0:
 if st.button("リセット"):
     st.session_state.timer_running = False
     st.session_state.time_left = 0
+    st.experimental_rerun()
