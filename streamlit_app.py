@@ -31,8 +31,8 @@ if "motivational_quote" not in st.session_state:
     st.session_state.motivational_quote = ""
 if "remaining_time" not in st.session_state:
     st.session_state.remaining_time = 0
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
+if "last_update_time" not in st.session_state:
+    st.session_state.last_update_time = None
 
 # チェックボックスが両方チェックされている場合のみスタートボタンを表示
 if agree_smartphone and agree_desk:
@@ -50,15 +50,17 @@ if agree_smartphone and agree_desk:
             st.session_state.timer_running = True
             st.session_state.motivational_quote = random.choice(motivational_quotes)
             st.session_state.remaining_time = total_seconds
-            st.session_state.start_time = time.time()
+            st.session_state.last_update_time = time.time()
 
         # タイマー表示用プレースホルダー
         timer_placeholder = st.empty()
         quote_placeholder = st.empty()
 
         if st.session_state.timer_running and st.session_state.remaining_time > 0:
-            elapsed_time = int(time.time() - st.session_state.start_time)
-            st.session_state.remaining_time = max(0, total_seconds - elapsed_time)
+            current_time = time.time()
+            elapsed_time = int(current_time - st.session_state.last_update_time)
+            st.session_state.remaining_time = max(0, st.session_state.remaining_time - elapsed_time)
+            st.session_state.last_update_time = current_time
 
             if st.session_state.remaining_time <= 0:
                 st.session_state.timer_running = False
