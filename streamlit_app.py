@@ -46,7 +46,7 @@ if agree_smartphone and agree_desk:
     total_seconds = hours * 3600 + minutes * 60 + seconds
 
     if total_seconds > 0:
-        if st.button("準備はいいですか？（スタート）") and not st.session_state.timer_running:
+        if st.button("準備はいいですか？（スタート）"):
             st.session_state.timer_running = True
             st.session_state.stop_pressed = False
             st.session_state.motivational_quote = random.choice(motivational_quotes)
@@ -58,21 +58,17 @@ if agree_smartphone and agree_desk:
         control_buttons_placeholder = st.empty()
 
         # タイマーの状態管理
-        if st.session_state.timer_running and not st.session_state.stop_pressed:
+        if st.session_state.remaining_time > 0 and not st.session_state.stop_pressed:
             quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
-
-            if st.session_state.remaining_time > 0:
-                minutes, seconds = divmod(st.session_state.remaining_time, 60)
-                hours, minutes = divmod(minutes, 60)
-                timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
-
-                # 1秒後に再レンダリング
-                time.sleep(1)
-                st.session_state.remaining_time -= 1
-
-            else:
-                st.session_state.timer_running = False
-                st.success("タイマー終了！お疲れさまでした！")
+            minutes, seconds = divmod(st.session_state.remaining_time, 60)
+            hours, minutes = divmod(minutes, 60)
+            timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
+            time.sleep(1)
+            st.session_state.remaining_time -= 1
+            st.rerun()
+        elif st.session_state.remaining_time == 0:
+            st.session_state.timer_running = False
+            st.success("タイマー終了！お疲れさまでした！")
 
         # ストップボタンと再開ボタンの表示
         with control_buttons_placeholder.container():
@@ -82,7 +78,7 @@ if agree_smartphone and agree_desk:
                     st.session_state.timer_running = False
 
             if st.session_state.stop_pressed:
-                st.error("本当に辞めちゃうの．．．？")
+                st.warning("本当に辞めちゃうの．．．？")
                 if st.button("もうちょっとがんばってみる！？"):
                     st.session_state.stop_pressed = False
                     st.session_state.timer_running = True
