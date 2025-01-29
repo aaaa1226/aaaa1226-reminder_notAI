@@ -31,6 +31,8 @@ if "motivational_quote" not in st.session_state:
     st.session_state.motivational_quote = ""
 if "remaining_time" not in st.session_state:
     st.session_state.remaining_time = 0
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
 
 # チェックボックスが両方チェックされている場合のみスタートボタンを表示
 if agree_smartphone and agree_desk:
@@ -48,26 +50,29 @@ if agree_smartphone and agree_desk:
             st.session_state.timer_running = True
             st.session_state.motivational_quote = random.choice(motivational_quotes)
             st.session_state.remaining_time = total_seconds
+            st.session_state.start_time = time.time()
+            st.experimental_rerun()
 
         # タイマー表示用プレースホルダー
         timer_placeholder = st.empty()
         quote_placeholder = st.empty()
 
-        if st.session_state.timer_running and st.session_state.remaining_time > 0:
-            for _ in range(st.session_state.remaining_time):
-                if not st.session_state.timer_running:
-                    break
+        if st.session_state.timer_running:
+            elapsed_time = int(time.time() - st.session_state.start_time)
+            st.session_state.remaining_time -= elapsed_time
+            st.session_state.start_time = time.time()
+            
+            if st.session_state.remaining_time <= 0:
+                st.session_state.remaining_time = 0
+                st.session_state.timer_running = False
+                st.success("タイマー終了！お疲れさまでした！")
+            else:
                 minutes, seconds = divmod(st.session_state.remaining_time, 60)
                 hours, minutes = divmod(minutes, 60)
                 timer_placeholder.write(f"残り時間: {hours:02}:{minutes:02}:{seconds:02}")
                 quote_placeholder.write(f"励ましの言葉: {st.session_state.motivational_quote}")
                 time.sleep(1)
-                st.session_state.remaining_time -= 1
                 st.experimental_rerun()
-
-        if st.session_state.remaining_time == 0:
-            st.session_state.timer_running = False
-            st.success("タイマー終了！お疲れさまでした！")
     else:
         st.warning("勉強時間を入力してください！")
 else:
