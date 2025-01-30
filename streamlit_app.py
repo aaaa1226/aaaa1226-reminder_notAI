@@ -71,11 +71,6 @@ if agree_smartphone and agree_desk:
             if not st.session_state.stop_pressed:
                 st.success("タイマー終了！お疲れさまでした！")
         
-        # ストップボタン
-        if stop_button_placeholder.button("ストップ"):
-            st.session_state.stop_pressed = True
-            st.session_state.timer_running = False
-            st.error("本当に辞めちゃうの．．．？")
     else:
         st.warning("勉強時間を入力してください！")
 else:
